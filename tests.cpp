@@ -173,7 +173,7 @@ double func2(double x) {
 }
 
 double **interpolation_table(function_pointer func, double *nodes, int node_number) {
-	double **table = (double **)calloc( 2, sizeof(double));
+	double **table = (double **)calloc( 2, sizeof(double *));
 	table[0] = (double *)calloc( node_number, sizeof(double));
 	table[1] = (double *)calloc( node_number, sizeof(double));
 
@@ -198,7 +198,7 @@ void interpolation_table_out(double **table, int node_number) {
 }
 
 double *jordan(double **table, int node_number) {
-	double **matrix = (double **)calloc( node_number, sizeof(double));
+	double **matrix = (double **)calloc( node_number, sizeof(double *));
 	for(int i = 0; i < node_number; i++) {
 		matrix[i] = (double *)calloc( node_number, sizeof(double));
 		matrix[i][0] = 1;
@@ -290,8 +290,8 @@ double *generate_equel(double left, double right, int num) {
 }
 
 double *generate_ch(double left, double right, int num) {
-	double *nodes = (double *)calloc( num, sizeof(double) );
-        
+//	double *nodes = (double *)calloc( num,  sizeof(* nodes)) ;
+        double *nodes = new double[num];
 	if(num >= 2) {
 	        nodes[0] = left;
                 nodes[num - 1] = right;
@@ -299,7 +299,7 @@ double *generate_ch(double left, double right, int num) {
         
 //	cout << left << " " << right << " ";
 
-        for(int i = 1; i < num + 1; i++) {
+        for(int i = 1; i < num ; i++) {
                 nodes[i] = (right + left)/2 + cos((2 * (double)i - 1)/(2 * (double)num) * M_PI) * (right - left)/2;
 //		cout << nodes[i]  << " ";
         }
