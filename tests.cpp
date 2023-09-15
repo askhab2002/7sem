@@ -93,8 +93,13 @@ int main(int argc, char *argv[]) {
         }
 
 	int part = 0;
-	cout << " Введите число разбиения промежутка для построения графика" << endl;
-	cin >> part;
+	part = 5 * node_number;
+
+	cout << " Введите отрезок для построения графика" << endl;
+	double left1 = 0;
+	double right1 = 0;
+	cin >> left1;
+	cin >> right1;
 
         
         if(nodes_type == 1) {
@@ -128,7 +133,7 @@ int main(int argc, char *argv[]) {
 
 	double *polynomial = jordan(table, node_number);
 	
-        double *partition = generate_equel(left, right, part);
+        double *partition = generate_equel(left1, right1, part);
 
 
         function_out(func, partition, part);
