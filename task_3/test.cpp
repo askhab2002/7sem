@@ -114,6 +114,28 @@ int main(int argc, char *argv[]) {
 
 
 //	cout << "+++++++++++++++++++++++++++++++++++++" << endl;
+
+        FILE *out = fopen("plot.gpi", "w+");
+
+
+	fprintf(out, "#! /usr/bin/gnuplot -persist\n");
+        fprintf(out, "set terminal png size 1000,1000 enhanced font \"Helvetica Bold, 20\"\n");
+        fprintf(out, "set output \"%s.png\"\n\n", "result");
+
+        fprintf(out, "set style line 1 lt 1 linecolor rgb \"red\" lw 1 pt 1\n");
+        fprintf(out, "set style line 2 lt 1 linecolor rgb \"blue\" lw 1 pt 1\n");
+
+    
+        fprintf(out, "set xrange [0:1]\n");
+
+        fprintf(out, "set title \"%s - %d knots \"\n", "result", node_number);
+
+        fprintf(out, "set grid\n\n");
+
+        fprintf(out, "splot  \"%s\" using 1:2:3 ls 1 title \"Interpolation Fourier Row\", ", "func.txt");
+        fprintf(out, "\"%s\" using 1:2:4 ls 2 title \"Original function\"", "func.txt");
+
+	fclose(out);
        
 	double p = constant_p(coeff_new, node_number, func);
 
