@@ -1,8 +1,0 @@
-set xlabel "X"
-set ylabel "Y"
-set grid
-set title "Gauss" font "Helvetica Bold, 20"
-plot "polynomial_out.txt" with line lc rgb "blue"
-
-set output "result.png"
-
