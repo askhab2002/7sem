@@ -1,0 +1,11 @@
+set terminal png size 500, 500 enhanced font "Helvetica Bold, 10"
+set output "result.png"
+
+set xlabel "X"
+set ylabel "Y"
+set grid
+set title "Lagrange" font "Helvetica Bold, 10"
+plot "lagrange_out.txt" with line lc rgb "blue", "function_out.txt" with line lc rgb "red"
+
+
+
