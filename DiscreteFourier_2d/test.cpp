@@ -408,4 +408,3 @@ double *coeff_out(double **func, function_pointer cosin, double *values, int val
 //	cout << " +++++++++++++++++++++++++++++++++" << endl;
         return coeff;
 }
-

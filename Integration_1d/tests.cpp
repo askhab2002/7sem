@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <iomanip>
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <math.h>
 #include "function_pointer.hpp"
@@ -7,7 +9,17 @@
 #include "IntegrationSimpson.hpp"
 #include "IntegrationGauss.hpp"
 
+#define eps 1e-2
+
 using namespace std;
+
+double derivative(function_pointer f, double x);
+double derivative_N(function_pointer f, double x, int N);
+
+double precision_gauss(function_pointer f, double a, double b);
+double precision_simpson(function_pointer f, double a, double b);
+double precision_gauss_N(function_pointer f, double a, double b, int N);
+double precision_simpson_N(function_pointer f, double a, double b, int N);
 
 int main(void) {
 	cout << "  Введите номер функции  " << endl;
@@ -74,6 +86,118 @@ int main(void) {
 	cout << "   Симпсон простой:  " << Simpson << endl;
         cout << "   Симпсон по " << N << " разбиению:  " << Simpson_N << endl;
         
+//	cout << derivative_N(func, (a + b)/2, 6) << endl;
+	cout << " simpson = " << precision_simpson(func, a, b) << endl;
+	cout << " gauss = " << precision_gauss(func, a, b) << endl;
+
+//	cout << " simpson N = " << precision_simpson_N(func, a, b, N) << endl;
+//        cout << " gauss N = " << precision_gauss_N(func, a, b, N) << endl;
+
+	fstream out;
+        out.open("ps.txt", std::ofstream::out | std::ofstream::trunc);
+
+	for(int i = 0; i < N; i++) {
+		out << i + 1 << " " << IntegralSimpson_N(a, b, func, i + 1) << endl;
+        }
+
+	out.close();
+
+	fstream out1;
+        out1.open("pg.txt", std::ofstream::out | std::ofstream::trunc);
+
+        for(int i = 0; i < N; i++) {
+                out1 << i + 1 << " " << IntegralGauss_N(a, b, func, i + 1) << endl;
+        }
+
+        out1.close();
+
+
 
 	return 0;
 }
+
+double precision_gauss_N(function_pointer f, double a, double b, int N) {
+	double precision = 0;
+        
+	for(int i = 1; i <= N; i++) {
+	        precision += precision_gauss(f, a, a + i * (b - a)/((double)N));
+	}
+
+	return precision;
+}
+
+double precision_simpson_N(function_pointer f, double a, double b, int N) {
+        double precision = 0;
+
+        for(int i = 0; i < N; i++) {
+                precision += precision_simpson(f, a, a + i * (b - a)/((double)N));
+        }
+
+        return precision;
+}
+
+
+double precision_gauss(function_pointer f, double a, double b) {
+	double norm = 0;
+        double value = 0;
+
+	for(int i = 0; i <= 100; i++) {
+		value = derivative_N(f, a + i * (b - a)/((double)100), 6);
+		if(value > norm) {
+			norm = value;
+		}
+	}
+
+	return (norm * pow(b - a, 7))/2016000;
+
+
+}	
+
+double precision_simpson(function_pointer f, double a, double b) {
+        double norm = 0;
+        double value = 0;
+
+        for(int i = 0; i <= 100; i++) {
+                value = derivative_N(f, a + i * (b - a)/((double)100), 4);
+                if(value > norm) {
+                        norm = value;
+                }
+        }
+
+        return (norm * pow(b - a, 5))/2880;
+
+
+}
+
+
+double derivative(function_pointer f, double x) {
+	double right = f(x + eps);
+	double left = f(x - eps);
+
+	
+
+	return (right - left)/(2 * eps);
+}
+
+double derivative_2(function_pointer f, double x) {
+        double right = derivative(f, x + eps);
+        double left = derivative(f, x - eps);
+
+	cout << setprecision(16) << derivative(f, x - eps) << " " << derivative(f, x + eps) << endl;
+
+
+
+        return (right - left)/(2 * eps);
+}
+
+double derivative_N(function_pointer f, double x, int N) {
+        if(N == 1) {
+		return derivative(f, x);
+	}
+        
+//	cout << derivative_N(f, x + eps, N - 1) << " " << derivative_N(f, x - eps, N - 1) << endl;
+	return (derivative_N(f, x + eps, N - 1) - derivative_N(f, x - eps, N - 1))/(2 * eps);
+
+}
+
+
