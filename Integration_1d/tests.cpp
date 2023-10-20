@@ -90,14 +90,14 @@ int main(void) {
 	cout << " simpson = " << precision_simpson(func, a, b) << endl;
 	cout << " gauss = " << precision_gauss(func, a, b) << endl;
 
-//	cout << " simpson N = " << precision_simpson_N(func, a, b, N) << endl;
-//        cout << " gauss N = " << precision_gauss_N(func, a, b, N) << endl;
+	cout << " simpson N partition = " << precision_simpson_N(func, a, b, N) << endl;
+        cout << " gauss N partition = " << precision_gauss_N(func, a, b, N) << endl;
 
 	fstream out;
         out.open("ps.txt", std::ofstream::out | std::ofstream::trunc);
 
 	for(int i = 0; i < N; i++) {
-		out << i + 1 << " " << IntegralSimpson_N(a, b, func, i + 1) << endl;
+		out << i + 1 << " " << precision_simpson_N(func, a, b, i + 1) << endl;
         }
 
 	out.close();
@@ -106,7 +106,7 @@ int main(void) {
         out1.open("pg.txt", std::ofstream::out | std::ofstream::trunc);
 
         for(int i = 0; i < N; i++) {
-                out1 << i + 1 << " " << IntegralGauss_N(a, b, func, i + 1) << endl;
+                out1 << i + 1 << " " << precision_gauss_N(func, a, b, i + 1) << endl;
         }
 
         out1.close();
@@ -117,23 +117,31 @@ int main(void) {
 }
 
 double precision_gauss_N(function_pointer f, double a, double b, int N) {
-	double precision = 0;
-        
-	for(int i = 1; i <= N; i++) {
-	        precision += precision_gauss(f, a, a + i * (b - a)/((double)N));
-	}
+	double norm = 0;
+        double value = 0;
 
-	return precision;
+        for(int i = 0; i <= 100; i++) {
+                value = derivative_N(f, a + i * (b - a)/((double)100), 6);
+                if(value > norm) {
+                        norm = value;
+                }
+        }
+
+        return (norm * pow(b - a, 7))/(2016000 * pow((double) N, 6));
 }
 
 double precision_simpson_N(function_pointer f, double a, double b, int N) {
-        double precision = 0;
+        double norm = 0;
+        double value = 0;
 
-        for(int i = 0; i < N; i++) {
-                precision += precision_simpson(f, a, a + i * (b - a)/((double)N));
+        for(int i = 0; i <= 100; i++) {
+                value = derivative_N(f, a + i * (b - a)/((double)100), 4);
+                if(value > norm) {
+                        norm = value;
+                }
         }
 
-        return precision;
+        return (norm * pow(b - a, 5))/(2880 * pow( (double)N, 4));
 }
 
 

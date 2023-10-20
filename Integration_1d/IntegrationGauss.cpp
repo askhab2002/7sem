@@ -1,11 +1,13 @@
 #include <math.h>
+#include <iostream>
 #include "function_pointer.hpp"
 #include "IntegrationGauss.hpp"
 
 
 double IntegralGauss(double a, double b, function_pointer f) {
-	double x1 = (a + b)/2 + ((b - a)/2) * sqrt((double)5/(double)3);
-	double x3 = (a + b)/2 - ((b - a)/2) * sqrt((double)5/(double)3);
+	double x1 = (a + b)/2 + ((b - a)/2) * sqrt((double)3/(double)5);
+//	std::cout << x1 << std::endl;
+	double x3 = (a + b)/2 - ((b - a)/2) * sqrt((double)3/(double)5);
 	double x2 = (a + b)/2;
 
 	return ((b - a)/18) * (5 * f(x1) + 8 * f(x2) + 5 * f(x3));

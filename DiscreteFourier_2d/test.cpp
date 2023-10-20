@@ -16,7 +16,7 @@ using namespace std;
 double  *test(int node_number, double  **func, int second);
 
 double *generate_equel(double left,  int num);
-double Scalar(double  **func, function_pointer cosin, double h, int m, int n, int second);
+double Scalar(double  **func, double h, int m, int n, int second);
 
 double func1(double x, double y);
 double func2(double x, double y);
@@ -27,11 +27,12 @@ double cosinus(double x, double y);
 
 double **do_matrix(function_pointer_2d func, double *nodes, int node_number);
 
-double *coeff_out(double **func, function_pointer cosin, double *values, int values_number, int second);
+double *coeff_out(double **func, int values_number, int second);
 double fourier(double **coeff, int num, double x, double y);
 void function_out(function_pointer_2d func, double **coeff_new, int num, double *partition, int part, string filename);
 
 double constant_p(double **coeff, int n, function_pointer_2d func);
+double **coef_out(int node_number, function_pointer_2d func);
 
 int main(int argc, char *argv[]) {
 
@@ -71,37 +72,21 @@ int main(int argc, char *argv[]) {
                 func = func5;
         }
 
-	double left = 0;
+        double left = 0;	
 
-	double *nodes = generate_equel(left, node_number);
+	double **coeff_new = coef_out(node_number, func);
 
-//	cout << " ------------------------------------------- " << endl;
 
-	double **func_matrix = do_matrix(func, nodes, node_number);
-/*
+
+	cout << " Матрица коэффициентов: " << endl;
+
 	for(int i = 0; i < node_number; i++) {
 		for(int j = 0; j < node_number; j++) {
-			cout << func_matrix[i][j] << " ";
+			cout << coeff_new[i][j] << " ";
 		}
 		cout << endl;
 	}
-*/
-//	cout << " ------------------------------------------- " << endl;
 
-        
-	double **coeff = (double **) malloc(node_number * sizeof(double *));
-
-	for(int i = 0; i < node_number; i++) {
-		coeff[i] = test(node_number, func_matrix, i);
-	}
-        
-//	cout << " ------------------------------------------- " << endl;
-
-	double **coeff_new = (double **) malloc(node_number * sizeof(double *));
-
-        for(int i = 0; i < node_number; i++) {
-                coeff_new[i] = test(node_number, coeff, i);
-        }
 
 //	cout << " ------------------------------------------- " << endl;
         
@@ -128,7 +113,7 @@ int main(int argc, char *argv[]) {
     
         fprintf(out, "set xrange [0:1]\n");
 
-        fprintf(out, "set title \"%s - %d knots \"\n", "result", node_number);
+        fprintf(out, "set title \"%s - %d nodes \"\n", "result", node_number);
 
         fprintf(out, "set grid\n\n");
 
@@ -143,17 +128,57 @@ int main(int argc, char *argv[]) {
 	
 
 	for(int i = 0; i < node_number; i++) {
-		free(coeff[i]);
-		free(func_matrix[i]);
 		free(coeff_new[i]);
 	}
 
-	free(coeff);
-	free(func_matrix);
 	free(coeff_new);
+	free(partition);
 
 
         return 0;
+}
+
+double **coef_out(int node_number, function_pointer_2d func) {
+	double left = 0;
+        double *nodes = generate_equel(left, node_number);
+
+//      cout << " ------------------------------------------- " << endl;
+
+        double **func_matrix = do_matrix(func, nodes, node_number);
+/*
+        for(int i = 0; i < node_number; i++) {
+                for(int j = 0; j < node_number; j++) {
+                        cout << func_matrix[i][j] << " ";
+                }
+                cout << endl;
+        }
+*/
+//      cout << " ------------------------------------------- " << endl;
+
+
+        double **coeff = (double **) malloc(node_number * sizeof(double *));
+
+        for(int i = 0; i < node_number; i++) {
+                coeff[i] = test(node_number, func_matrix, i);
+        }
+
+//      cout << " ------------------------------------------- " << endl;
+
+        double **coeff_new = (double **) malloc(node_number * sizeof(double *));
+
+        for(int i = 0; i < node_number; i++) {
+                coeff_new[i] = test(node_number, coeff, i);
+        }
+
+	for(int i = 0; i < node_number; i++) {
+                free(coeff[i]);
+                free(func_matrix[i]);
+        }
+        free(coeff);
+        free(func_matrix);
+	free(nodes);
+
+        return coeff_new;
 }
 
 double constant_p(double **coeff, int n, function_pointer_2d func) {
@@ -162,45 +187,56 @@ double constant_p(double **coeff, int n, function_pointer_2d func) {
         double norm = 0;
         double h = 0;
 
-        double *norms = (double *)calloc(10, sizeof(double));
-        double *hs = (double *)calloc(10, sizeof(double));
+        double *norms = (double *)calloc(4, sizeof(double));
+        double *hs = (double *)calloc(4, sizeof(double));
 
-        for(int i = 1; i <= 10; i++) {
+        for(int i = 1; i <= 4; i++) {
                 h = 1 / ((double)n * (double)i);
   //              cout << " h = " << h << endl;
                 for(double k = 0; k < 1; k += h) {
 			for(double  l = 0; l < 1; l+= h) {
 //				cout << four(coeff, n, h, l) << " ";
                                 if(fabs(func(h, l) - four(coeff, n, h, l)) > norm) {
-                                        norm = fabs(func(h, l) - four(coeff, n, h, l));
+                                        norm = fabs(func(h, l) - four(coef_out(n * i, func), n, h, l));
 //					cout << fabs(func(h, l) - four(coeff, n, h, l)) << " ";
                                 }
 			}
                 }
 
-                norms[i - 1] = log(1/norm);
-                hs[i - 1] = log(1/h);
+                norms[i - 1] = log(norm);
+                hs[i - 1] = log(h);
                 norm = 0;
-//		cout << " norms = " << norms[i - 1] << " hs = " << hs[i - 1] << endl;
+		cout << " norms = " << norms[i - 1] << " hs = " << hs[i - 1] << endl;
         }
 
 	fstream out;
         out.open("p.txt", std::ofstream::out | std::ofstream::trunc);
 
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < 4; i++) {
                 out << hs[i] << " " << norms[i] << endl;
 
         }
 
         out.close();
 
-        double p = 0;
+        
+	double p_up = 0;
+	double p_down = 0;
+	double p1 = 0;
+	double p2 = 0;
+	double p3 = 0;
 
-        for(int i = 1; i < 10; i++) {
-                p += (norms[i] - norms[i - 1])/(hs[i] - hs[i - 1]);
+        for(int i = 0; i < 4; i++) {
+                p_up += norms[i] * hs[i];
+		p_down += hs[i] * hs[i];
+		p1 += hs[i];
+		p2 += norms[i];
 
         }
 
+	p3 = p1 * p1;
+
+	double p = (4 * p_up - p1 * p2)/(4 * p_down - p3);
 
         FILE *file = fopen("2plot.gpi", "w+");
 
@@ -209,7 +245,7 @@ double constant_p(double **coeff, int n, function_pointer_2d func) {
         fprintf(file, "set xlabel \"X\" \n");
         fprintf(file, "set ylabel \"Y\" \n");
         fprintf(file, "set grid \n");
-        fprintf(file, "set title \"Fourier p constant = %lf,  nodes number = %d \" font \"Helvetica Bold, 10\" \n", p/9, n);
+        fprintf(file, "set title \"Fourier p constant = %lf,  nodes number = %d \" font \"Helvetica Bold, 10\" \n", p, n);
         fprintf(file, "plot \"p.txt\" with line lc rgb \"blue\"  \n");
 
         fclose(file);
@@ -217,7 +253,7 @@ double constant_p(double **coeff, int n, function_pointer_2d func) {
         free(norms);
         free(hs);
 
-        return p/9;
+        return p;
 
 }
 
@@ -266,7 +302,7 @@ double **do_matrix(function_pointer_2d func, double *nodes, int node_number) {
 
 double *test(int node_number, double  **func, int second) {
 
-        function_pointer cosin = cosin;
+        
 
 //      cout << " Введите границы отрезка" << endl;
         double left = 0;
@@ -279,7 +315,7 @@ double *test(int node_number, double  **func, int second) {
 
         
 
-        double *coeff = coeff_out(func, cosin, nodes, node_number, second);
+        double *coeff = coeff_out(func, node_number, second);
 
 
         
@@ -322,6 +358,9 @@ double func3(double x, double y) {
 }
 
 double func4(double x, double y) {
+	y = 0;
+	x += y; 
+
         if(fabs(x - 1) < eps) {
                 return 0;
         }
@@ -334,30 +373,27 @@ double func4(double x, double y) {
 }
 
 double func5(double x , double y) {
-        return cos(x * 10 * M_PI) *  cos(y * 10 * M_PI);
+        return cos(x * 4 * M_PI) *  cos(y * 2 * M_PI);
 }
 
 
-double cosinus(double x) {
-        return cos(x);
-}
 
 double *generate_equel(double left, int num) {
         double step = 1/(num - 0.5);
-        double *nodes = (double *)calloc( num - 1, sizeof(double) );
+        double *nodes = (double *)calloc( num, sizeof(double) );
 
         if(num >= 2) {
                 nodes[0] = left;
         }
 
-        for(int i = 1; i < num - 1; i++) {
+        for(int i = 1; i < num; i++) {
                nodes[i] = nodes[i - 1] + step;
         }
 
         return nodes;
 }
 
-double Scalar(double  **func, function_pointer cosin, double h, int m, int n, int second) {
+double Scalar(double  **func, double h, int m, int n, int second) {
 /*
 	for(int i = 0; i < n; i++) {
                 for(int j = 0; j < n; j++) {
@@ -381,7 +417,7 @@ double Scalar(double  **func, function_pointer cosin, double h, int m, int n, in
         return scalar * h;
 }
 
-double *coeff_out(double **func, function_pointer cosin, double *values, int values_number, int second) {
+double *coeff_out(double **func, int values_number, int second) {
 
         double *coeff = (double *) calloc(values_number , sizeof(double));
         double scalar = 0;
@@ -391,7 +427,7 @@ double *coeff_out(double **func, function_pointer cosin, double *values, int val
 
 
         for(int m = 0; m < values_number ; m++) {
-                scalar = Scalar(func, cosin, h, m, values_number, second);
+                scalar = Scalar(func, h, m, values_number, second);
 
                 coeff[m] = scalar * 2;
 //                cout << " coeff = " << coeff[m] << endl;
@@ -404,7 +440,7 @@ double *coeff_out(double **func, function_pointer cosin, double *values, int val
                 sum += coeff[i];
         }
         coeff[0] = func[0][ second] - sum;
-        cout << coeff[0] << endl;
+//        cout << coeff[0] << endl;
 //	cout << " +++++++++++++++++++++++++++++++++" << endl;
         return coeff;
 }
