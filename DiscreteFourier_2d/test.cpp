@@ -190,14 +190,21 @@ double constant_p(double **coeff, int n, function_pointer_2d func) {
         double *norms = (double *)calloc(4, sizeof(double));
         double *hs = (double *)calloc(4, sizeof(double));
 
+	double ***coe = (double ***) malloc(4 * sizeof(double **));
+
+	for(int i = 0; i < 4; i++) {
+		coe[i] = coef_out(n * (i + 1), func);
+	}
+
         for(int i = 1; i <= 4; i++) {
                 h = 1 / ((double)n * (double)i);
   //              cout << " h = " << h << endl;
                 for(double k = 0; k < 1; k += h) {
 			for(double  l = 0; l < 1; l+= h) {
+                                
 //				cout << four(coeff, n, h, l) << " ";
-                                if(fabs(func(h, l) - four(coeff, n, h, l)) > norm) {
-                                        norm = fabs(func(h, l) - four(coef_out(n * i, func), n, h, l));
+                                if(fabs(func(k, l) - four(coe[i - 1], n * i, k, l)) > norm) {
+                                        norm = fabs(func(k, l) - four(coe[i - 1], n * i, k, l));
 //					cout << fabs(func(h, l) - four(coeff, n, h, l)) << " ";
                                 }
 			}
@@ -252,6 +259,14 @@ double constant_p(double **coeff, int n, function_pointer_2d func) {
 
         free(norms);
         free(hs);
+
+	for(int i = 0; i < 4; i++) {
+             for(int j = 0; j < n * (i + 1); j++) {
+	           free(coe[i][j]);
+	     }
+             free(coe[i]);
+        }
+        free(coe);	
 
         return p;
 

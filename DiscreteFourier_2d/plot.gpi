@@ -5,7 +5,7 @@ set output "result.png"
 set style line 1 lt 1 linecolor rgb "red" lw 1 pt 1
 set style line 2 lt 1 linecolor rgb "blue" lw 1 pt 1
 set xrange [0:1]
-set title "result - 8 nodes "
+set title "result - 10 nodes "
 set grid
 
 splot  "func.txt" using 1:2:3 ls 1 title "Interpolation Fourier Row", "func.txt" using 1:2:4 ls 2 title "Original function"
