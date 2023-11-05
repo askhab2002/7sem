@@ -25,7 +25,7 @@ int main(void) {
 
 	FILE *file1 = fopen("results.txt", "w+");
 
-        for(int i = 3; i < N; i++) {
+        for(int i = 1; i < N; i++) {
                 fprintf(file1, "%d %lf\n", i + 1, test(f, i + 1));
         }
 
@@ -64,9 +64,9 @@ double test(function_pointer f, int N) {
 			cout << "(" << triangles[i][j][0] << ", " << triangles[i][j][1] << ")  ";
 		}
 		cout << endl;
-	} */
+	} 
 
-       
+  */     
 
 //	cout << "    Интеграл по разбиению на " << 2 * N * N << " треугольников = " << Integral_2d_N(f, N, triangles) << endl;
  	

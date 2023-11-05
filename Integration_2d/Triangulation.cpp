@@ -12,6 +12,7 @@ void Triangulation(double Lx, double Ly, int N, FILE *file, double ***triangles,
 	fprintf(file, "%d\n", 3 * N * N - 2 * N);
 	fprintf(file, "%d\n", 4 * N);
 
+
 	
 
 	for(int i = 0; i < (N + 1) * (N + 1); i++) {
@@ -24,39 +25,76 @@ void Triangulation(double Lx, double Ly, int N, FILE *file, double ***triangles,
 	int k = 0;
 	int corner = 0;
 
-
+        
+	int l = 0;
 
 
 	for(int i = 1; i < (N + 1) ; i++) {
 		for(int j = 1; j < N + 1; j++) {
-//		        triangles[2 * ((i - 1) * N + (j - 1))] = (double **)calloc(3, sizeof(double));
-//			triangles[2 * ((i - 1) * N + (j - 1)) + 1] = (double **)calloc(3, sizeof(double));
+//		        triangles[l] = (double **)calloc(3, sizeof(double));
+//			triangles[l + 1] = (double **)calloc(3, sizeof(double));
 		        k++;
 			corner = j + (i - 1) * (N + 1);
 		        fprintf(file, "%d: %d %d %d\n", k, corner, corner + 1, corner + (N + 1));
 		        k++;
 		        fprintf(file, "%d: %d %d %d\n", k, corner + 1, corner + (N + 1), corner + (N + 1) + 1);
-/*			triangles[2 * ((i - 1) * N + (j - 1))][0] = nodes[corner];
-			triangles[2 * ((i - 1) * N + (j - 1))][1] = nodes[corner + 1];
-			triangles[2 * ((i - 1) * N + (j - 1))][2] = nodes[corner + (N + 1)];
-			triangles[2 * ((i - 1) * N + (j - 1)) + 1][0] = nodes[corner + 1];
-			triangles[2 * ((i - 1) * N + (j - 1)) + 1][1] = nodes[corner + (N + 1)];
-			triangles[2 * ((i - 1) * N + (j - 1)) + 1][2] = nodes[corner + (N + 1) + 1]; */
+/*			
+			if((l - 1) % (N + 1) != 0) {
+			triangles[l][0] = nodes[m];
+			triangles[l][1] = nodes[m + 1];
+			triangles[l][2] = nodes[m + (N + 1)];
+			std::cout << l + 1 << ": " << m  + 1 << " " << m + 1  + 1 << " " << m + (N + 1) + 1 << std::endl;
+			l++;
+			}
+			triangles[l][0] = nodes[m + 1];
+			triangles[l][1] = nodes[m + (N + 1)];
+			triangles[l][2] = nodes[m + (N + 1) + 1];
+		        m++;
+		        	
+			std::cout << l + 1 << ": " << m + 1  << " " << m + (N + 1)  << " " << m + (N + 1) + 1 << std::endl;
+
+			l++; */
+			 
 		}
 	}
+        
+	corner = 0;
+	for(int i = 0; i < N; i++, corner++) {
+		for(int j = 0; j < N; j++) {
+			triangles[l] = (double **)calloc(3, sizeof(double));
+                        triangles[l + 1] = (double **)calloc(3, sizeof(double));
 
+			;
+			triangles[l][0] = nodes[corner];
+                        triangles[l][1] = nodes[corner + 1];
+                        triangles[l][2] = nodes[corner + (N + 1)];
+  //                      std::cout << l + 1 << ": " << m  + 1 << " " << m + 1  + 1 << " " << m + (N + 1) + 1 << std::endl;
+
+			l++;
+
+			triangles[l][0] = nodes[corner + 1];
+                        triangles[l][1] = nodes[corner + (N + 1)];
+                        triangles[l][2] = nodes[corner + (N + 1) + 1];
+                        
+
+//                        std::cout << l + 1 << ": " << m + 1  << " " << m + (N + 1)  << " " << m + (N + 1) + 1 << std::endl;
+			l++;
+			corner++;
+		}
+	}
+/*
         for(int i = 0; i < N * N; i++) {
 		triangles[2 * i] = (double **) calloc(3, sizeof(double));
-		triangles[2 * i][0] = nodes[i + 1];
-		triangles[2 * i][1] = nodes[i + 2];
-		triangles[2 * i][2] = nodes[i + 2 + (N + 1)];
+		triangles[2 * i][0] = nodes[i];
+		triangles[2 * i][1] = nodes[i + 1];
+		triangles[2 * i][2] = nodes[i  + (N + 1)];
 
 		triangles[2 * i + 1] = (double **) calloc(3, sizeof(double));
                 triangles[2 * i + 1][0] = nodes[i + 1];
-                triangles[2 * i + 1][1] = nodes[i + 1 + (N + 1)];
-                triangles[2 * i + 1][2] = nodes[i + 2 + (N + 1)];
+                triangles[2 * i + 1][1] = nodes[i + (N + 1)];
+                triangles[2 * i + 1][2] = nodes[i + 1 + (N + 1)];
 	}	
-
+*/
 	k = 1;
 	corner = 1; 
 
