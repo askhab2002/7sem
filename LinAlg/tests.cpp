@@ -13,7 +13,7 @@ typedef double (* function_pointer)(double x);
 
 double Scalar(double *f, int m, int N);
 double Lambda(int n, double p, int N);
-double C_Coeff(int m, int N, double *f, double p);
+double C_Coeff(int m, int N, double *Coeff);
 double Y_Coeff(int m, int N, double *f, double p);
 double *TriangularSystem(int N, double *f, double p);
 double *TriangularSystemP(int N, double *f, double *p);
@@ -31,8 +31,8 @@ double *DoF(function_pointer f, int N);
 
 double *TestR(function_pointer f, int N, double eps, double *error, int mIter, double p);
 
-double *Step1(double **B, double **A, double *b, double *x_k, int N, double *p, double Tau);
-double BSolver(double *x, double **A, double **B, double *b, double *p, double Tau, int N, double eps, int mIter);
+double *Step1(double **A, double *b, double *x_k, int N, double *p, double Tau);
+double BSolver(double *x, double **A, double *b, double *p, double Tau, int N, double eps, int mIter);
 double *TestB(double *f, int N, double eps, double *error, int mIter);
 
 double function1(double x);
@@ -50,6 +50,9 @@ int main(void) {
 	cin >> N;
 
 	double *F = DoF(f, N);
+//	for(int i = 0; i < N; i++) {
+//		cout << F[i] << endl;
+//	}
 
 	double p = 0;
 	cout << "    Введите число p" << endl;
@@ -85,7 +88,7 @@ int main(void) {
 
         free(x);	
 
-	double *z = TestB(f, N, eps, &error, mIter);
+	double *z = TestB(F, N, eps, &error, mIter);
 
 	cout << " error = " << error << endl;
 
@@ -96,6 +99,7 @@ int main(void) {
         }
 
         free(z);
+	free(F);
 
 	return 0;
 
@@ -119,7 +123,7 @@ double *TestR(function_pointer f, int N, double eps, double *error, int mIter, d
 		cout << b[i] << endl;
 	}
 
-	double *x = (double *)calloc(N, sizeof(double));
+	double *x = (double *)calloc(N , sizeof(double));
 
 	
 	for(int i = 0; i < N; i++) {
@@ -223,7 +227,7 @@ double Richardson(double *x, double **A, double *b, double Tau, int N, double ep
 
 //	cout << " ---------------------- " << endl;
 
-	int end = mIter;
+	int end = mIter - 1;
 
 	x_k[0] = (double *)calloc(N, sizeof(double));
 	for(int i = 0; i < N; i++) {
@@ -235,7 +239,7 @@ double Richardson(double *x, double **A, double *b, double Tau, int N, double ep
 		x_k[i] = Step(A, N, x_k[i - 1], b, Tau);
 		precision = RealError(A, N, x_k[i], b);
 
-		free(x_k[i - 1]);
+//		free(x_k[i - 1]);
 //		cout << "---------" << precision << endl;
 		if(precision < eps) {
 			cout <<  "++++ " << endl;
@@ -288,8 +292,10 @@ double *DoB(function_pointer f, int N) {
 
 	double *b = (double *)calloc(N, sizeof(double));
 
+//	cout << "b:" << endl;
 	for(int i = 0; i < N; i++) {
 		b[i] = (*f)((i + 1)/((double)N + 1));
+//		cout << b[i] << endl;
 	}
 
 	return b;
@@ -327,12 +333,12 @@ double **DoMatrixP(int N, double *p) {
 
 }
 
-double *DoF(fumction_pointer f, int N) {
+double *DoF(function_pointer f, int N) {
 
 	double *F = (double *)calloc(N, sizeof(double));
 
 	for(int i = 0; i < N; i++) {
-		F[i] = (*f)((i + 1)/((double)N + 1);
+		F[i] = (*f)((i + 1)/((double)N + 1));
 	}
 
 	return F;
@@ -361,10 +367,13 @@ double function2(double x) {
 
 double Scalar(double *f, int m, int N) {
 
+
 	double sum = 0;
+   //     double sum1 = 0;
 
 	for(int i = 1; i < N + 1; i++) {
 		sum += (sin((M_PI * m * i)/((double)N + 1)) * f[i - 1])/((double)N + 1);
+//		sum1 += sin((M_PI * m * i)/((double)N + 1)) * sin((M_PI * m * i)/((double)N + 1))/((double)N + 1);
 	}
 //        cout << m << "-----" << sum << endl;
 	return sum;
@@ -372,6 +381,7 @@ double Scalar(double *f, int m, int N) {
 
 
 double Lambda(int n, double p, int N) {
+//	cout << "p  = " << p << endl;
 	return p - 2 * (N + 1) * (N + 1) * (cos((M_PI * n)/((double)N + 1)) - 1);
 }
 
@@ -380,11 +390,11 @@ double C_Coeff(int m, int N, double *f, double p) {
 	return 2 * Scalar(f, m, N)/Lambda(m, p, N);
 }
 
-double Y_Coeff(int m, int N, double *f, double p) {
+double Y_Coeff(int m, int N, double *Coeff) {
         double sum = 0;
 
 	for(int i = 1; i < N + 1; i++) {
-		sum += C_Coeff(i, N, f, p) * sin((M_PI * m * i)/((double)N + 1));
+		sum += Coeff[i - 1] * sin((M_PI * m * i)/((double)N + 1));
 	}
 
 	return sum;
@@ -393,33 +403,45 @@ double Y_Coeff(int m, int N, double *f, double p) {
 double *TriangularSystem(int N, double *f, double p) {
 
 	double *Y = (double *)calloc(N, sizeof(double));
+        double *Coeff = (double *)calloc(N, sizeof(double));
+	for(int i = 0; i < N; i++) {
+		Coeff[i] = C_Coeff(i + 1, N, f, p);
+//		cout << C[i] << " ";
+	}
+//	cout << endl;
 
 	for(int i = 1; i < N + 1; i++) {
-		Y[i - 1] = Y_Coeff(i, N, f, p);
+		Y[i - 1] = Y_Coeff(i, N, Coeff);
 	}
 
+	free(Coeff);
 	return Y;
 }
 
 double *TriangularSystemP(int N, double *f, double *p) {
 
         double *Y = (double *)calloc(N, sizeof(double));
-
-        for(int i = 1; i < N + 1; i++) {
-                Y[i - 1] = Y_Coeff(i, N, f, p[i - 1]);
+	double *Coeff = (double *)calloc(N, sizeof(double));
+        for(int i = 0; i < N; i++) {
+                Coeff[i] = C_Coeff(i + 1, N, f, p[i]);
         }
 
+        for(int i = 1; i < N + 1; i++) {
+                Y[i - 1] = Y_Coeff(i, N, Coeff);
+        }
+
+	free(Coeff);
         return Y;
 }
 
-double *Step1(double **B, double **A, double *b, double *x_k, int N, double *p, double Tau) {
+double *Step1(double **A, double *b, double *x_k, int N, double *p, double Tau) {
 	double *values = (double *)calloc(N, sizeof(double));
 
 	double sum = 0;
 
 	for(int i = 0; i < N; i++) {
 		for(int j = 0; j < N; j++) {
-			sum += A[i][j] * x[j];
+			sum += A[i][j] * x_k[j];
 		}
 
 		values[i] = b[i] - sum;
@@ -438,14 +460,14 @@ double *Step1(double **B, double **A, double *b, double *x_k, int N, double *p, 
 }
 
 
-double BSolver(double *x, double **A, double **B, double *b, double *p, double Tau, int N, double eps, int mIter) {
+double BSolver(double *x, double **A, double *b, double *p, double Tau, int N, double eps, int mIter) {
 
         double **x_k = (double **)malloc(mIter * sizeof(double *));
         double precision = 0;
 
 //      cout << " ---------------------- " << endl;
 
-        int end = mIter;
+        int end = mIter - 1;
 
         x_k[0] = (double *)calloc(N, sizeof(double));
         for(int i = 0; i < N; i++) {
@@ -454,7 +476,7 @@ double BSolver(double *x, double **A, double **B, double *b, double *p, double T
 
         for(int i = 1; i < mIter; i++) {
 //              cout << " ---------------------- " << endl;
-                x_k[i] = Step1(B, A, b, x_k[i - 1], N, p, Tau);
+                x_k[i] = Step1(A, b, x_k[i - 1], N, p, Tau);
                 precision = RealError(A, N, x_k[i], b);
 
                 free(x_k[i - 1]);
@@ -489,7 +511,7 @@ double *TestB(double *f, int N, double eps, double *error, int mIter) {
 	double **A = DoMatrixP(N, p);
 
 	double *x = (double *)calloc(N, sizeof(double));
-
+//        cout << "=============" << endl;
 
         for(int i = 0; i < N; i++) {
                 x[i] = 0;
@@ -500,13 +522,15 @@ double *TestB(double *f, int N, double eps, double *error, int mIter) {
 
         cout << " tau = " << tau << endl;
 
-        *error = BSolver(x, A, A, p, tau, N, eps, mIter);
+        *error = BSolver(x, A, f, p, tau, N, eps, mIter);
 
         for(int i = 0; i < N; i++) {
                 free(A[i]);
         }
         free(A);
-        free(b);
+        
+
+	free(p);
 
         return x;
 }
