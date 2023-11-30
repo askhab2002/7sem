@@ -33,7 +33,7 @@ double constant_p(double *coeff, int n, function_pointer func);
 
 int main(int argc, char *argv[]) {
 
-	if(argc != 5) {
+	if(argc != 3) {
                 cout << "    Вы ввели некорректную командную строку" << endl;
                 return 0;
         }
@@ -144,7 +144,7 @@ double constant_p(double *coeff, int n, function_pointer func) {
 	double *hs = (double *)calloc(10, sizeof(double));
 
 	for(int i = 1; i <= 10; i++) {
-	        h = 1 / ((double)n * (double)i);
+	        h = 1 / ((double)n * (double)i - 0.5);
 
 		for(double k = 0; k < 1; k += h) { 
 	                if(fabs(func(h) - four(coeff, n, h)) > norm) {

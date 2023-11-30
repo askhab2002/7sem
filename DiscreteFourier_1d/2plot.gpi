@@ -3,5 +3,5 @@ set output "p.png"
 set xlabel "X" 
 set ylabel "Y" 
 set grid 
-set title "Fourier p constant = 1.026818,  nodes number = 50 " font "Helvetica Bold, 10" 
+set title "Fourier p constant = -inf,  nodes number = 10 " font "Helvetica Bold, 10" 
 plot "p.txt" with line lc rgb "blue"  

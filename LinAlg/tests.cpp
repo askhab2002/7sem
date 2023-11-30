@@ -38,34 +38,65 @@ double *TestB(double *f, int N, double eps, double *error, int mIter);
 double function1(double x);
 double function2(double x);
 
+double cosinus(double x);
+double cosi(int m, int k, int N);
+double *coeff_out(function_pointer func, function_pointer cosin, int values_number);
+double Scalar_(function_pointer func, function_pointer cosin, double h, int m, int n);
+
 using namespace std;
 
 int main(void) {
          
 	function_pointer f = function2;
-	
+        function_pointer cosin = cosinus;
+
         cout << "    Введите число узлов" << endl;
         
 	int N = 0;
 	cin >> N;
 
-	double *F = DoF(f, N);
-//	for(int i = 0; i < N; i++) {
-//		cout << F[i] << endl;
-//	}
+/*	double *F = DoF(f, N);
 
-	double p = 0;
-	cout << "    Введите число p" << endl;
-        cin >> p;
-
-	double *Y = TriangularSystem(N, F, p);
-
+	cout << " f = " << endl;
 	for(int i = 0; i < N; i++) {
+		cout << F[i] << endl;
+	}
+*/
+	double p = 0;
+//	cout << "    Введите число p" << endl;
+//        cin >> p;
+
+	cout << "---------------" << endl;
+
+	double *Y = coeff_out(f, cosin, N + 1); // = TriangularSystem(N, F, p);
+
+	cout << " Y : " << endl;
+	for(int i = 0; i < N + 1; i++) {
 		cout << Y[i] << endl;
 	}
 
-	free(Y);
+	cout << "    C: " << endl;
+	double *C = (double *)calloc(N, sizeof(double));
+	for(int i = 0; i < N; i++) {
+                C[i] = Y[i]/Lambda(i + 1, p, N + 1);
+		cout << C[i] << endl;
+        }
 
+	double *ans = (double *)calloc(N, sizeof(double));
+        double sum = 0;
+
+	cout << "   ans: " << endl;
+	for(int k = 0; k < N; k++) {
+		sum = 0;
+		for(int m = 1; m < N + 1; m++) {
+		       sum += cosi(m, k + 1, N + 1) * C[m - 1];
+	        }
+		ans[k] = sum;
+		cout << ans[k] << endl;
+        }		
+
+	free(Y);
+/*
 	cout << "  Введите число итераций для Ричардсона" << endl;
 	int mIter = 0;
 	cin >> mIter;
@@ -100,9 +131,64 @@ int main(void) {
 
         free(z);
 	free(F);
-
+*/
 	return 0;
 
+}
+
+double Lambda(int n, double p, int N) {
+//      cout << "p  = " << p << endl;
+        return p + 2 * ((double)N - 0.5) * ((double)N - 0.5) * (1 - cos((M_PI * n)/((double)N - 0.5)));
+}
+
+double cosinus(double x) {
+	return cos(x);
+}
+
+double cosi(int m, int k, int N) {
+	return cos((M_PI * m * k)/(N - 0.5));
+}
+
+double Scalar_(function_pointer func, function_pointer cosin, double h, int m, int n) {
+        double scalar = 0;
+
+	scalar += (*func)(0) * (*cosin)(0) / 2;
+//        cout << " f(0) = " << (*func)(0) << endl;
+//	cout << " f(1) = " << (*func)( h * (n - 1)) << endl;
+	for(int k = 1; k < n; k++) {
+		scalar += (*func)(k * h) * (*cosin)(M_PI * k * h * m);
+	}
+
+        cout << " m = " << m << " scalar = " << scalar << endl;
+	return scalar * h;
+}
+
+double *coeff_out(function_pointer func, function_pointer cosin, int values_number) {
+        
+	cout << " ==================== " << endl;
+	double *coeff = (double *) calloc(values_number , sizeof(double));
+        double scalar = 0;
+	double h = 1/((double)values_number - 0.5);
+	cout << " h = " << h << endl;
+
+
+
+	for(int m = 0; m < values_number ; m++) {
+		scalar = Scalar_(func, cosin, h, m, values_number);
+
+		coeff[m] = scalar * 2;
+		cout << " coeff = " << coeff[m] << endl;
+	}
+
+	double sum = 0;
+        for(int i = 1; i < values_number; i++) {
+	        sum += coeff[i];
+	}
+        coeff[0] = (*func)(0) - sum;
+        cout << coeff[0] << endl;
+        
+
+	return coeff;
 }
 
 double *TestR(function_pointer f, int N, double eps, double *error, int mIter, double p) {
@@ -337,8 +423,9 @@ double *DoF(function_pointer f, int N) {
 
 	double *F = (double *)calloc(N, sizeof(double));
 
-	for(int i = 0; i < N; i++) {
-		F[i] = (*f)((i + 1)/((double)N + 1));
+	for(int i = 0; i < N + 1; i++) {
+		cout << i + 1 << " " << (i)/((double)N + 0.5) << endl;
+		F[i] = (*f)((i)/((double)N + 0.5));
 	}
 
 	return F;
@@ -347,7 +434,7 @@ double *DoF(function_pointer f, int N) {
 
 double function1(double x) {
 
-	return sin(M_PI * x);
+	return cos(M_PI * x );
 }
 
 double function2(double x) {
@@ -368,22 +455,18 @@ double function2(double x) {
 double Scalar(double *f, int m, int N) {
 
 
-	double sum = 0;
+	double sum = f[0] * (0.5/((double)N + 0.5));
    //     double sum1 = 0;
 
 	for(int i = 1; i < N + 1; i++) {
-		sum += (sin((M_PI * m * i)/((double)N + 1)) * f[i - 1])/((double)N + 1);
+		sum += (cos((M_PI * m * i)/((double)N + 0.5)) * f[i])/((double)N + 0.5);
 //		sum1 += sin((M_PI * m * i)/((double)N + 1)) * sin((M_PI * m * i)/((double)N + 1))/((double)N + 1);
 	}
-//        cout << m << "-----" << sum << endl;
+        cout << m << "-----" << sum << endl;
 	return sum;
 }
 
 
-double Lambda(int n, double p, int N) {
-//	cout << "p  = " << p << endl;
-	return p - 2 * (N + 1) * (N + 1) * (cos((M_PI * n)/((double)N + 1)) - 1);
-}
 
 double C_Coeff(int m, int N, double *f, double p) {
 	
@@ -394,7 +477,7 @@ double Y_Coeff(int m, int N, double *Coeff) {
         double sum = 0;
 
 	for(int i = 1; i < N + 1; i++) {
-		sum += Coeff[i - 1] * sin((M_PI * m * i)/((double)N + 1));
+		sum += Coeff[i - 1] * cos((M_PI * m * i)/((double)N + 0.5));
 	}
 
 	return sum;
