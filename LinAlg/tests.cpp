@@ -42,6 +42,11 @@ double cosinus(double x);
 double cosi(int m, int k, int N);
 double *coeff_out(function_pointer func, function_pointer cosin, int values_number);
 double Scalar_(function_pointer func, function_pointer cosin, double h, int m, int n);
+double fourier(double *coeff, int num, double x);
+double *error(double *Y, function_pointer f, double p, double h, int N);
+
+void test_1(int N, function_pointer f, function_pointer cosin, double p);
+void test_2(int N, function_pointer f, double p, int mIter);
 
 using namespace std;
 
@@ -50,7 +55,7 @@ int main(void) {
 	function_pointer f = function2;
         function_pointer cosin = cosinus;
 
-        cout << "    Введите число узлов" << endl;
+        cout << "    Введите число корней" << endl;
         
 	int N = 0;
 	cin >> N;
@@ -63,60 +68,21 @@ int main(void) {
 	}
 */
 	double p = 0;
-//	cout << "    Введите число p" << endl;
-//        cin >> p;
+	cout << "    Введите число p" << endl;
+        cin >> p;
 
 	cout << "---------------" << endl;
 
-	double *Y = coeff_out(f, cosin, N + 1); // = TriangularSystem(N, F, p);
+	test_1(N, f, cosin, p);
 
-	cout << " Y : " << endl;
-	for(int i = 0; i < N + 1; i++) {
-		cout << Y[i] << endl;
-	}
 
-	cout << "    C: " << endl;
-	double *C = (double *)calloc(N, sizeof(double));
-	for(int i = 0; i < N; i++) {
-                C[i] = Y[i]/Lambda(i + 1, p, N + 1);
-		cout << C[i] << endl;
-        }
-
-	double *ans = (double *)calloc(N, sizeof(double));
-        double sum = 0;
-
-	cout << "   ans: " << endl;
-	for(int k = 0; k < N; k++) {
-		sum = 0;
-		for(int m = 1; m < N + 1; m++) {
-		       sum += cosi(m, k + 1, N + 1) * C[m - 1];
-	        }
-		ans[k] = sum;
-		cout << ans[k] << endl;
-        }		
-
-	free(Y);
-/*
 	cout << "  Введите число итераций для Ричардсона" << endl;
 	int mIter = 0;
+
 	cin >> mIter;
 
-	double error = 0;
-
-	double eps = eps2;
-
-	double *x = TestR(f, N, eps, &error, mIter, p);
-
-	
-
-        cout << " error = " << error << endl;
-
-	cout << " x: " << endl;
-
-        for(int i = 0; i < N; i++) {
-		cout << x[i] << endl;
-	}
-
+	test_2(N, f, p, mIter);
+/*
         free(x);	
 
 	double *z = TestB(F, N, eps, &error, mIter);
@@ -136,8 +102,133 @@ int main(void) {
 
 }
 
+void test_2(int N, function_pointer f, double p, int mIter) {
+	double error_ = 0;
+
+        double eps = eps2;
+
+        double *Y = TestR(f, N, eps, &error_, mIter, p);
+
+
+
+        cout << " error = " << error_ << endl;
+
+/*      cout << " Richardson Y: " << endl;
+
+        for(int i = 0; i < N; i++) {
+                cout << Y[i] << endl;
+        }
+*/
+        double h = 1/((double)N - 0.5);
+
+        double *errors = error(Y, f, p, h, N);
+
+        double error_norm = 0;
+
+	double b_norm = 0;
+
+        cout << "  errors: " << endl;
+        for(int i = 0; i < N; i++) {
+                error_norm += errors[i] * errors[i];
+                b_norm += (*f)(i * h) * (*f)(i * h);
+//                cout << errors[i] << endl;
+        }
+
+        cout << " error_norm = " << sqrt(error_norm) << "  relative error = " << sqrt(error_norm)/sqrt(b_norm) << endl;
+
+        free(Y);
+        free(errors);
+
+	return;
+}
+
+void test_1(int N, function_pointer f, function_pointer cosin, double p) {
+	double *D = coeff_out(f, cosin, N); // = TriangularSystem(N, F, p);
+/*
+        cout << " D : " << endl;
+        for(int i = 0; i < N; i++) {
+                cout << D[i] << endl;
+        }
+
+        cout << "    C: " << endl;  */
+        double *C = (double *)calloc(N, sizeof(double));
+
+
+        for(int i = 0; i < N; i++) {
+                if(i == 0 && fabs(Lambda(i, p, N)) < eps2) {
+                       C[i] = 0;
+                       continue;
+                }
+                C[i] = D[i]/Lambda(i, p, N);
+//                cout << C[i] << endl;
+        }
+
+
+        double *Y = (double *)calloc(N, sizeof(double));
+        double h = 1/((double)N - 0.5);
+
+    //    cout << "   Y: " << endl;
+        for(int k = 0; k < N; k++) {
+
+                Y[k] = fourier(C, N, k * h);
+  //              cout << Y[k] << endl;
+        }
+
+	double *errors = error(Y, f, p, h, N);
+
+	double error_norm = 0;
+	double b_norm = 0;
+//        cout << "  errors: " << endl;
+        for(int i = 0; i < N; i++) {
+//                cout << errors[i] << endl;
+                  error_norm += errors[i] * errors[i];
+		  b_norm += (*f)(i * h) * (*f)(i * h);
+
+        }
+
+	cout << "error_norm = " << sqrt(error_norm) << "   relative error = " << sqrt(error_norm)/sqrt(b_norm) << endl;
+
+        free(Y);
+        free(D);
+        free(C);
+	free(errors);
+
+	return ;
+
+}
+
+
+
+double *error(double *Y, function_pointer f, double p, double h, int N) {
+	double *errors = (double *)calloc(N, sizeof(double));
+
+	errors[0] = (*f)(0) - p * Y[0] - 2 * (N - 0.5) * (N - 0.5) * (Y[0] - Y[1]);
+	errors[N - 1] = (*f)((N - 1) * h) - p * Y[N - 1] - (N - 0.5) * (N - 0.5) * (Y[N - 1] - Y[N - 2]);
+
+	for(int i = 1; i < N - 1; i++) {
+		errors[i] = (*f)(i * h) - p * Y[i] + (N - 0.5) * (N - 0.5) * (Y[i + 1] - 2 * Y[i] + Y[i - 1]);
+	}
+
+	return errors;
+}
+
+double fourier(double *coeff, int num, double x) {
+
+        double sum = 0;
+
+        for(int i = 0; i < num ; i++) {
+                sum += coeff[i] * cos(M_PI * i * x);
+        }
+
+        return sum;
+}
+
 double Lambda(int n, double p, int N) {
-//      cout << "p  = " << p << endl;
+ //       cout << "p  = " << p << endl;
+/*        if(n == 0 && fabs(p) < eps) {
+		return 0;
+	}
+*/
         return p + 2 * ((double)N - 0.5) * ((double)N - 0.5) * (1 - cos((M_PI * n)/((double)N - 0.5)));
 }
 
@@ -146,7 +237,7 @@ double cosinus(double x) {
 }
 
 double cosi(int m, int k, int N) {
-	return cos((M_PI * m * k)/(N - 0.5));
+	return cos((M_PI * m * k)/((double)N - 0.5));
 }
 
 double Scalar_(function_pointer func, function_pointer cosin, double h, int m, int n) {
@@ -159,13 +250,13 @@ double Scalar_(function_pointer func, function_pointer cosin, double h, int m, i
 		scalar += (*func)(k * h) * (*cosin)(M_PI * k * h * m);
 	}
 
-        cout << " m = " << m << " scalar = " << scalar << endl;
+//        cout << " m = " << m << " scalar = " << scalar << endl;
 	return scalar * h;
 }
 
 double *coeff_out(function_pointer func, function_pointer cosin, int values_number) {
         
-	cout << " ==================== " << endl;
+//	cout << " ==================== " << endl;
 	double *coeff = (double *) calloc(values_number , sizeof(double));
         double scalar = 0;
 	double h = 1/((double)values_number - 0.5);
@@ -177,7 +268,7 @@ double *coeff_out(function_pointer func, function_pointer cosin, int values_numb
 		scalar = Scalar_(func, cosin, h, m, values_number);
 
 		coeff[m] = scalar * 2;
-		cout << " coeff = " << coeff[m] << endl;
+//		cout << " coeff = " << coeff[m] << endl;
 	}
 
 	double sum = 0;
@@ -185,7 +276,7 @@ double *coeff_out(function_pointer func, function_pointer cosin, int values_numb
 	        sum += coeff[i];
 	}
         coeff[0] = (*func)(0) - sum;
-        cout << coeff[0] << endl;
+//        cout << coeff[0] << endl;
         
 
 	return coeff;
@@ -196,7 +287,7 @@ double *TestR(function_pointer f, int N, double eps, double *error, int mIter, d
 	double **A = DoMatrix(N, p);
 	double *b = DoB(f, N);
  
-	cout << " A: " << endl;
+/*	cout << " A: " << endl;
 	for(int i = 0; i < N; i++) {
 		for(int j = 0; j < N; j++) {
 			cout << A[i][j] << " ";
@@ -208,7 +299,7 @@ double *TestR(function_pointer f, int N, double eps, double *error, int mIter, d
 	for(int i = 0; i < N; i++) {
 		cout << b[i] << endl;
 	}
-
+*/
 	double *x = (double *)calloc(N , sizeof(double));
 
 	
@@ -261,13 +352,35 @@ double Tau(double **A, int N, double *q) {
 double *Step(double **A, int N, double *x, double *b, double Tau) {
 	double *new_x = (double *)calloc(N, sizeof(double));
         double sum = 0;
-
+/*
+	for(int i = 0; i < N; i++) {
+		for(int j = 0; j < N; j++) {
+			cout << A[i][j] << " ";
+		}
+		cout << endl;
+	}
+*/
 	for(int i = 0; i < N; i++) {
 		new_x[i] = x[i] + Tau * b[i];
 
-		for(int j = 0; j < N; j++) {
+		for(int j = i - 1; j < i + 2; j++) {
+			if(j == -1 || j == N) {
+				continue;
+			}
 			sum -= Tau * A[i][j] * x[j];
 		}
+ /*
+		if(i != 0 && i != N - 1) {
+		        sum -= Tau * (A[i][i] * x[i] + A[i][i - 1] * x[i - 1] + A[i][i + 1] * x[i + 1]);
+                }
+
+		if(i == 0) {
+			sum -= Tau * (A[i][i] * x[i] + A[i][i + 1] * x[i + 1]);
+		}
+
+		if(i == N - 1) {
+                        sum -= Tau * (A[i][i] * x[i] + A[i][i - 1] * x[i - 1]);
+                } */
 
 		new_x[i] += sum;
 		sum = 0;
@@ -287,7 +400,10 @@ double RealError(double **A, int N, double *x, double *b) {
        double sum = 0;
 
        for(int i = 0; i < N; i++) {
-	       for(int j = 0; j < N; j++) {
+	       for(int j = i - 1; j < i + 2; j++) {
+                       if(j == -1 || j == N) {
+                                continue;
+                        }
 		       new_b[i] += A[i][j] * x[j];
 	       }
        }
@@ -358,16 +474,16 @@ double **DoMatrix(int N, double p) {
        matrix[0] = (double *)calloc(N, sizeof(double));
        matrix[N - 1] = (double *)calloc(N, sizeof(double));
 
-       matrix[0][0] = N * N * 2. + p;
-       matrix[0][1] = -1. * N * N;
-       matrix[N - 1][N - 2] = -1. * N * N;
-       matrix[N - 1][N - 1] = 2. * N * N + p ;
+       matrix[0][0] = (N - 0.5) * (N - 0.5) * 2. + p;
+       matrix[0][1] = -2. * (N - 0.5) * (N - 0.5);
+       matrix[N - 1][N - 2] = -1. * (N - 0.5) * (N - 0.5);
+       matrix[N - 1][N - 1] = 1. * (N - 0.5) * (N - 0.5) + p ;
 
        for(int i = 1; i < N - 1; i++) {
 	       matrix[i] = (double *)calloc(N, sizeof(double));
-	       matrix[i][i - 1]  = -1. * N * N;
-	       matrix[i][i] = 2. * N * N + p;
-	       matrix[i][i + 1] = -1. * N * N;
+	       matrix[i][i - 1]  = -1. * (N - 0.5) * (N - 0.5);
+	       matrix[i][i] = 2. * (N - 0.5) * (N - 0.5) + p;
+	       matrix[i][i + 1] = -1. * (N - 0.5) * (N - 0.5) ;
        }
 
        return matrix;
@@ -380,7 +496,7 @@ double *DoB(function_pointer f, int N) {
 
 //	cout << "b:" << endl;
 	for(int i = 0; i < N; i++) {
-		b[i] = (*f)((i + 1)/((double)N + 1));
+		b[i] = (*f)((i)/((double)N - 0.5));
 //		cout << b[i] << endl;
 	}
 
